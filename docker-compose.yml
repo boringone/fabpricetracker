@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./fabpricetracker
+      dockerfile: Dockerfile
+    command: /web_start
+    volumes:
+      - app:/app
+    ports:
+      - 8000:8000
+    env_file:
+      - ./fabpricetracker/.env.local
+    depends_on:
+      - redis
+      - db
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=django
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Wirtual1
+  redis:
+    image: redis:7-alpine
+    expose:
+      - 6379
+  celery_worker:
+    build:
+      context: ./fabpricetracker
+      dockerfile: Dockerfile
+    command: /celery_start
+    image: web
+    volumes:
+      - app:/app
+    env_file:
+      - ./fabpricetracker/.env.local
+    depends_on:
+      - redis
+      - db
+  flower:
+    build:
+      context: ./fabpricetracker
+      dockerfile: Dockerfile
+    command: /flower_start
+    image: web
+    volumes:
+      - app:/app
+    env_file:
+      - ./fabpricetracker/.env.local
+    ports:
+      - 5557:5555
+    depends_on:
+      - redis
+      - db
+  celery_beat:
+    build:
+      context: ./fabpricetracker
+      dockerfile: Dockerfile
+    command: /celery_beat_start
+    image: web
+    volumes:
+      - app:/app
+    env_file:
+      - ./fabpricetracker/.env.local
+    depends_on:
+      - redis
+      - db
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: front
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - web
+
+
+volumes:
+  postgres_data:
+  app:

@@ -22,7 +22,7 @@ function CardDetail() {
 
     useEffect(() => {
         async function getData() {
-            const response = await fetch(`${import.meta.env.VITE_SERVER_URL}\\cards-info\\7hNLjcLRMQKf89KqdNzfw`)
+            const response = await fetch(`${import.meta.env.VITE_SERVER_URL}\\cards-info\\${printingId}`)
             const requestData = await response.json()
             setRequestData(requestData)
             setIsLoading(false);
@@ -33,9 +33,8 @@ function CardDetail() {
 
     return (
     <div>
-<TableComponent requestData={requestData}/>
-</div>
-
+        <TableComponent requestData={requestData}/>
+    </div>
     );
 }
 

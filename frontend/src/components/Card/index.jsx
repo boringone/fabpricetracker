@@ -7,7 +7,7 @@ import CardBody from './cardbody'
 
 function CardExample({ requestData, itemData }) {
     const [selectedPrinting, setSelectedPrinting] = useState(itemData[0].unique_id);
-    let selectedPrintingData
+    let selectedPrintingData = itemData[0]
     for (let elem of itemData){
         if (elem.unique_id == selectedPrinting){
             selectedPrintingData = elem

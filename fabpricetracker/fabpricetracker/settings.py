@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'cards',
     'card_details',
+    'django_celery_beat',
+    'django_filters',
 ]
 
 REST_FRAMEWORK = {

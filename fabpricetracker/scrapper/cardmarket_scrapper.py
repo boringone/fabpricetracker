@@ -1,9 +1,14 @@
 import os
 import time
+from selenium.webdriver import ActionChains
+from selenium_stealth import stealth
 from random import choice
 
 from bs4 import BeautifulSoup
+from selenium.common import TimeoutException
+from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
 
@@ -12,6 +17,7 @@ BASE_URL = "https://www.cardmarket.com/en/FleshAndBlood/Products/Singles"
 
 def format_url(**kwargs):
     print(kwargs)
+    # TODO pitch should be included for scrapping lower rarity cards
     if kwargs.get('alpha_print'):
         # URL in form of:
         # {set-name}{set-edition-full-name}/{card-name}{pitch_name}{OPTIONAL set_id if not alpha}{card-print-id}{OPTIONAL foiling-id}
@@ -47,30 +53,101 @@ def format_url(**kwargs):
         return os.path.join(BASE_URL, kwargs.get("set_name"),
                             '-'.join([kwargs.get("card_name"), kwargs.get("foiling")]))
 
+def gen_driver():
+    try:
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+        ]
+        options = webdriver.ChromeOptions()
+        user_agent = choice(user_agents)
+        options.add_argument(f"user-agent={user_agent}")
+        options.add_argument("start-maximized")
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-setuid-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--start-maximized")
+        options.add_argument("--window-size=1920,1080")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        driver = webdriver.Chrome(options=options)
+
+        stealth(driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+                )
+        return driver
+    except Exception as e:
+        print("Error in Driver: ", e)
+
+
+def _init_driver(driver):
+    try:
+        driver.execute_cdp_cmd('Page.enable', {})
+        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+            'source': """
+                Element.prototype._as = Element.prototype.attachShadow;
+                Element.prototype.attachShadow = function (params) {
+                    return this._as({mode: "open"})
+                };
+            """
+        })
+    except Exception as e:
+        print('error init driver')
+
+
+def get_shadowed_iframe(driver, css_selector: str):
+    try:
+        shadow_element = driver.execute_script("""
+        return document.querySelector(arguments[0]).shadowRoot.firstChild;
+        """, css_selector)
+        return shadow_element
+    except:
+        print('no shadow iframe')
+        pass
+
 
 def scrap_cm(**kwargs):
-    time.sleep(1)
     url = format_url(**kwargs)
-    user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
-        "Mozilla/5.0 (Windows NT 6.1; rv:109.0) Gecko/20100101 Firefox/113.0",
-        "Mozilla/5.0 (Android 12; Mobile; rv:109.0) Gecko/113.0 Firefox/113.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/113.0",
-    ]
-    profile = webdriver.FirefoxProfile()
-    profile.set_preference("general.useragent.override", choice(user_agents))
-    options = webdriver.FirefoxOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.profile = profile
-    driver = webdriver.Firefox(options=options)
+    driver = gen_driver()
+    _init_driver(driver)
     driver.get(url)
-    table_content = driver.find_element(By.CLASS_NAME, 'table-body').get_attribute('innerHTML')
-    souped_html = BeautifulSoup(table_content, 'html.parser')
-    driver.close()
+    try:
+        table_content = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 'table-body')))
+    except TimeoutException:
+        input_checkbox = get_shadowed_iframe(driver, "div:not(:has(div))")
+        if not input_checkbox:
+            return {}
+        driver.switch_to.frame(input_checkbox)
+        iframe_body = driver.find_element(By.CSS_SELECTOR, "body")
+        if iframe_body:
+            iframe_body.click()
+            actions = ActionChains(driver)
+            actions.move_to_element_with_offset(iframe_body, 10, 10)
+            actions.click(iframe_body)
+            actions.perform()
+            driver.switch_to.default_content()
+            table_content = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 'table-body')))
+        else:
+            print('cloudfare error')
+            return {}
     result_dict = {}
+    table_inner_html = table_content.get_attribute('innerHTML')
+    if not table_inner_html:
+        return result_dict
+    souped_html = BeautifulSoup(table_inner_html, 'html.parser')
+    driver.quit()
     for index, row_div in enumerate(souped_html.findAll('div', attrs={'class': 'row g-0 article-row'})):
         if index == 5:
             break
