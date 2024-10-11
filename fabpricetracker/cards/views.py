@@ -1,11 +1,11 @@
 from celery.result import AsyncResult
-from django.db.models import Case, When, Value
+from django.db.models import Case, When, Value, Func, F
 from django.http import JsonResponse
 from django_filters import CharFilter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import viewsets
 from django.apps import apps
-from cards.serializers import CardsSerializer, CardSetSerializer
+from cards.serializers import CardsSerializer, CardSetSerializer, CardTypeSerializer
 from cards.tasks import scrap_cm_card
 
 
@@ -23,6 +23,16 @@ class CardSetViewSet(viewsets.ModelViewSet):
     serializer_class = CardSetSerializer
     queryset = apps.get_model('cards.Set').objects.all()
     pagination_class = None
+
+
+class CardsTypeViewSet(viewsets.ModelViewSet):
+    serializer_class = CardTypeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return {'unnested_types': list(apps.get_model('cards.BasicCard').objects.annotate(
+            unnested_types=Func(F('types'), function='unnest')).values_list(
+            'unnested_types', flat=True).distinct('unnested_types'))}
 
 
 class CardsViewSet(viewsets.ModelViewSet):

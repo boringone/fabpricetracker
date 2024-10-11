@@ -51,7 +51,7 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'cards.paginators.CustomPaginator',
     'PAGE_SIZE': 10
 }
 
@@ -96,10 +96,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'django',
-        'USER': 'postgres',
-        'PASSWORD': 'Wirtual1',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'USER': os.getenv('POSTGRES_USER', ''),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", ''),
+        'HOST': os.getenv('POSTGRES_LOCAL_HOST', ''),
+        'PORT': os.getenv('POSTGRES_PORT', 5432)
     }
 }
 
@@ -111,7 +111,7 @@ DATABASES = {
 #         'NAME': 'django',
 #         'USER': os.getenv('POSTGRES_USER', ''),
 #         'PASSWORD': os.getenv("POSTGRES_PASSWORD", ''),
-#         'HOST': os.getenv('POSTGRES_HOST', ''),
+#         'HOST': os.getenv('POSTGRES_DOCKER_HOST', ''),
 #         'PORT': os.getenv('POSTGRES_PORT', '')
 #     }
 # }

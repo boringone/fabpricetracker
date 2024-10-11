@@ -39,3 +39,14 @@ class CardsSerializer(serializers.ModelSerializer):
     class Meta:
         model = apps.get_model('cards.BasicCard')
         fields = '__all__'
+
+
+class CardTypeSerializer(serializers.ModelSerializer):
+    unnested_types = serializers.ListField()
+
+    class Meta:
+        model = apps.get_model('cards.BasicCard')
+        fields = ['unnested_types']
+
+    def to_representation(self, instance):
+        return self.instance

@@ -6,7 +6,7 @@ import './index.css'
 import { createBrowserRouter, RouterProvider, Link } from 'react-router-dom'
 
 const router = createBrowserRouter([
-    {path: '/:pageNumb?',
+    {path: '/',
     element: <App />,
     errorElement: <div>404 Not Found
                 <Link to="/">Home</Link>
@@ -19,7 +19,5 @@ const router = createBrowserRouter([
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
     <RouterProvider router={router}/>
-  </React.StrictMode>,
 )
