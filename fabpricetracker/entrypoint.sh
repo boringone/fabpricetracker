@@ -7,7 +7,8 @@ while ! nc -z db 5432; do
 done
 echo "PostgreSQL started"
 echo "Apply database migrations"
-python manage.py migrate cards
 python manage.py migrate
+echo "Collecting static files"
+python manage.py collectstatic
 echo "Starting server"
-python manage.py runserver 0.0.0.0:8000
+gunicorn fabpricetracker.wsgi --bind 0.0.0.0:8000

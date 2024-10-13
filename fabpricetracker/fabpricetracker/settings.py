@@ -10,27 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+import secrets
 from pathlib import Path
 import dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-dotenv_file = BASE_DIR / '.env.local'
-# DELETE IN PRODUCTION
-if os.path.isfile(dotenv_file):
-    dotenv.load_dotenv(dotenv_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#4oiq_bt9axnvmq_fgo_zyl4jf&mu=m9#%hdldyzj0^!k^5tzs'
+SECRET_KEY = os.getenv('ALLOWED_ORIGINS', secrets.token_urlsafe())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+dotenv_file = BASE_DIR / '.env.local'
+# DELETE IN PRODUCTION
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
 
 
 # Application definition
@@ -55,7 +56,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
+CSRF_TRUSTED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -98,23 +100,10 @@ DATABASES = {
         'NAME': 'django',
         'USER': os.getenv('POSTGRES_USER', ''),
         'PASSWORD': os.getenv("POSTGRES_PASSWORD", ''),
-        'HOST': os.getenv('POSTGRES_LOCAL_HOST', ''),
+        'HOST': os.getenv('POSTGRES_HOST', ''),
         'PORT': os.getenv('POSTGRES_PORT', 5432)
     }
 }
-
-
-# PROD
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'django',
-#         'USER': os.getenv('POSTGRES_USER', ''),
-#         'PASSWORD': os.getenv("POSTGRES_PASSWORD", ''),
-#         'HOST': os.getenv('POSTGRES_DOCKER_HOST', ''),
-#         'PORT': os.getenv('POSTGRES_PORT', '')
-#     }
-# }
 
 
 # Password validation
@@ -152,6 +141,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -166,7 +156,5 @@ JSON_RARITY_FILE_PATH = os.path.join(BASE_DIR, 'json', 'rarity.json')
 JSON_SET_FILE_PATH = os.path.join(BASE_DIR, 'json', 'set.json')
 
 # PROD
-# CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-# CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0")
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0")
