@@ -1,12 +1,16 @@
 from celery.result import AsyncResult
+from django.db import OperationalError
 from django.db.models import Case, When, Value, Func, F
 from django.http import JsonResponse
 from django_filters import CharFilter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
 from django.apps import apps
 from cards.serializers import CardsSerializer, CardSetSerializer, CardTypeSerializer
 from cards.tasks import scrap_cm_card
+
+from fabpricetracker.celery import get_celery_worker_status
 
 
 class BasicCardFilter(FilterSet):
@@ -54,7 +58,11 @@ CORE_SETS = ['WTR', 'ARC', 'CRU', 'MON', 'ELE', 'EVR', 'UPR', 'DYN',
              'OUT', 'DTD', 'EVO', 'HVY', 'MST']
 
 
+
 def scrap_card(request, card_printing_pk):
+    celery_status = get_celery_worker_status()
+    if celery_status.get("ERROR"):
+        return JsonResponse(celery_status, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     card_model = apps.get_model('cards.cardprinting')
     try:
         card_model.objects.get(pk=card_printing_pk)

@@ -20,3 +20,16 @@ app.autodiscover_tasks()
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     print(f'Request: {self.request!r}')
+
+def get_celery_worker_status():
+    ERROR_KEY = "ERROR"
+    result = {ERROR_KEY: ''}
+    try:
+        insp = app.control.inspect()
+        if not insp.stats():
+            return { ERROR_KEY: 'No running Celery workers were found.' }
+    except Exception as e:
+        from errno import errorcode
+        msg = f"Error connecting to the backend: {e}"
+        return { ERROR_KEY: msg }
+    return result

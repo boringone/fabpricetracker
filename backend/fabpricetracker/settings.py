@@ -31,10 +31,11 @@ dotenv_file = BASE_DIR / '.env.local'
 if os.path.isfile(dotenv_file):
     dotenv.load_dotenv(dotenv_file)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(', ')
 
 
 # Application definition
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,24 +46,32 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'djoser',
     'cards',
     'card_details',
     'django_celery_beat',
     'django_filters',
+    'users',
 ]
+AUTH_USER_MODEL = "users.CustomUserModel"
+
+SIMPLE_JWT = {
+   'AUTH_HEADER_TYPES': ('JWT',),
+}
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('users.authentication.CustomJWTAuthentication',),
     'DEFAULT_PAGINATION_CLASS': 'cards.paginators.CustomPaginator',
     'PAGE_SIZE': 10
 }
 
 CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
 CSRF_TRUSTED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(', ')
-
+CORS_ALLOW_CREDENTIALS = True
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -158,3 +167,10 @@ JSON_SET_FILE_PATH = os.path.join(BASE_DIR, 'json', 'set.json')
 # PROD
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0")
+
+
+ACCESS_COOKIES_MAX_AGE = 60
+REFRESH_COOKIES_MAX_AGE = 60 * 60
+# Change if https is established
+COOKIES_SECURE = False
+COOKIES_SAMESITE = 'Lax'

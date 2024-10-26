@@ -9,6 +9,6 @@ echo "PostgreSQL started"
 echo "Apply database migrations"
 python manage.py migrate
 echo "Collecting static files"
-python manage.py collectstatic
+python manage.py collectstatic --noinput
 echo "Starting server"
 gunicorn fabpricetracker.wsgi --bind 0.0.0.0:8000
