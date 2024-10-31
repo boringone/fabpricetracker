@@ -5,29 +5,13 @@ import Button from 'react-bootstrap/Button';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-function NavbarExample() {
+import LoginModal from './loginModal'
+import RegisterModal from './registerModal'
+function NavbarExample(loggedIn) {
   return (
-<Navbar className="bg-body-tertiary justify-content-around">
-      <Form>
-        <InputGroup>
-          <InputGroup.Text id="basic-username">Username</InputGroup.Text>
-          <Form.Control
-            className="mx-4"
-            placeholder="Username"
-            aria-label="Username"
-            aria-describedby="basic-username"
-          />
-          <InputGroup.Text id="basic-password">Password</InputGroup.Text>
-          <Form.Control
-            className="mx-4"
-            type='password'
-            placeholder="Password"
-            aria-label="Password"
-            aria-describedby="basic-password"
-          />
-            <Button className="mx-4" type="submit">Submit</Button>
-        </InputGroup>
-      </Form>
+<Navbar className="bg-body-tertiary justify-content-end">
+    <LoginModal/>
+    <RegisterModal/>
     </Navbar>
   );
 }

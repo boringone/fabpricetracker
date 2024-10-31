@@ -14,6 +14,9 @@ function CardBody({ selectedItem, data, onSelectItem, items, requestData }) {
     async function sendPriceTask() {
         const response = await fetch(`${import.meta.env.VITE_SERVER_URL}\\task_queue\\${selectedItem}`,
          {method: 'GET',});
+        if (response.status == 500){
+            return
+        }
         const requestData = await response.json()
         return requestData.task_id
     }
@@ -25,13 +28,11 @@ function CardBody({ selectedItem, data, onSelectItem, items, requestData }) {
             <Card.Img src={data.image_url} variant="top" />
         </Col>
         <Col>
-            <Card.Body className="p-4">
             <Card.Title>{requestData.name}</Card.Title>
             <Card.Text>
                 {data.foiling.name}
             </Card.Text>
-            </Card.Body>
-            <Row>
+            <Row className='button_row'>
                 <Col>
                     <Dropdown className="mb-4">
                        <Dropdown.Toggle variant="success" id="dropdown-basic">
@@ -42,12 +43,12 @@ function CardBody({ selectedItem, data, onSelectItem, items, requestData }) {
                        </Dropdown.Menu>
                      </Dropdown>
                 </Col>
-                <Col>
+                <Col className="mb-4">
                     <LinkContainer to={`../cardData/${selectedItem}`}>
                         <Button variant="outline-info">Info</Button>
                     </LinkContainer>
                 </Col>
-                <Col>
+                <Col className="mb-4">
                     <SpinnerButton clicked={isClicked} onClick={setIsClicked} callbackFunc={sendPriceTask}/>
                 </Col>
             </Row>

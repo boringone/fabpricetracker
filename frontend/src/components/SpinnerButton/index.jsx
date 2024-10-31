@@ -6,6 +6,11 @@ function SpinnerButton({ clicked, onClick, callbackFunc}) {
     async function handleClick(eventKey) {
         setRenders(true)
         const taskID = await callbackFunc()
+        if (!taskID){
+//                 alert?
+            console.log('error task failed')
+            setRenders(false)
+        }
         getTaskResult(taskID)
       };
     async function getTaskResult(taskID){
